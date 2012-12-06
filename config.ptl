@@ -1,0 +1,6 @@
+CSS_PREFIX = "icon-"
+
+FILES_LIST = (
+	'icons/*.png',
+	'icons/truc.jpg',
+)
