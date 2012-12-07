@@ -16,6 +16,8 @@ from os.path import dirname, abspath, normpath, join, exists, basename, splitext
 from glob import glob
 from math import ceil
 
+# TODO modified file date
+
 class Ponyitem(floory.Item):
     def __init__(self, filename, block_w, block_h):
         self.filename = filename

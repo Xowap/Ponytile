@@ -1,6 +1,3 @@
-[files]
-icons/*.png
-
 [css]
 prefix = .icon-
 general_selector = [class^="icon-"], [class*=" icon-"]
@@ -13,3 +10,6 @@ format = PNG
 [tile]
 width = 16
 height = 16
+
+[files]
+sprite/*.png
