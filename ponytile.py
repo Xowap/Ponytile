@@ -7,41 +7,133 @@
 # Copyright (c) 2012 Rémy Sanchez <remy.sanchez@hyperthese.net>
 # Under the terms of the WTFPL
 
-import imp
+from __future__ import division
 
-def parse_config(filename):
-    try:
-        config = imp.load_source('ponytile-config', filename)
-        ret = {}
+import ConfigParser
+import Image
+import floory
+from os.path import dirname, abspath, normpath, join, exists, basename, splitext
+from glob import glob
+from math import ceil
 
-        if not hasattr(config, "CSS_PREFIX"):
-            return (None, "CSS_PREFIX is required in the configuration. It is a string that will be prepended to the"
-                          + " file name to form the CSS selector.")
+class Ponyitem(floory.Item):
+    def __init__(self, filename, block_w, block_h):
+        self.filename = filename
+        self.pil = Image.open(filename)
 
-        if not hasattr(config, "FILES_LIST"):
-            return (None, "FILES_LIST is required in the configuration. It should be a tuple of strings that describe"
-                          + " the file names to be included, relatively to the configuration file. The glob syntax is"
-                          + " allowed.")
+        self.block_w, self.block_h = block_w, block_h
+        self.img_w, self.img_h = self.pil.size
 
-        if not isinstance(config.CSS_PREFIX, basestring):
-            return (None, "CSS_PREFIX should be a string.")
+        w = ceil(self.img_w / self.block_w)
+        h = ceil(self.img_h / self.block_h)
 
-        if not isinstance(config.FILES_LIST, tuple):
-            return (None, "FILES_LIST should be a tuple.")
+        super(Ponyitem, self).__init__(self.filename, w, h)
 
-        for x in config.FILES_LIST:
-            if not isinstance(x, basestring):
-                return (None, "FILES_LIST should be a tuple of file paths in the form of strings (the glob syntax is"
-                              + " allowed).")
+    def left(self):
+        return int(self.x * self.block_w)
 
-        ret["css_prefix"] = config.CSS_PREFIX
-        ret["files_list"] = config.FILES_LIST
+    def upper(self):
+        return int(self.y * self.block_h)
 
-        return ret, None
-    except:
-        return None, "Wrong configuration syntax."
+    def right(self):
+        return int(self.x * self.block_w + self.img_w)
+
+    def lower(self):
+        return int(self.y * self.block_h + self.img_h)
+
+    def width(self):
+        return self.img_w
+
+    def height(self):
+        return self.img_h
+
+
+class Ponytile(object):
+    _default_conf = join(dirname(__file__), "/default_config.ptl")
+
+    def __init__(self, filename):
+        self.cfg = None
+        self.filename = filename
+        self.cwd = abspath(dirname(self.filename))
+
+    def load_cfg(self):
+        self.cfg, error = self._parse_config(self.filename)
+
+        if error is not None:
+            return False, error
+        else:
+            return True, None
+
+    def compile(self):
+        self.spritefile = self.cfg.get('sprite', 'filename')
+        input_img = self._expand_file_list([k for k, v in self.cfg.items('files')])
+        block_w = self.cfg.getint('tile', 'width')
+        block_h = self.cfg.getint('tile', 'height')
+
+        items = [Ponyitem(x, block_w, block_h) for x in input_img]
+        grid = floory.plan(items, self.cfg.getint('sprite', 'width'))
+
+        self._make_image(items, grid)
+        print self._make_css(items)
+
+    def _make_image(self, items, grid):
+        img_w = grid.w * self.cfg.getint('tile', 'width')
+        img_h = grid.h * self.cfg.getint('tile', 'height')
+
+        img = Image.new("RGBA", (img_w, img_h), (255, 255, 255, 0))
+
+        for item in items:
+            box = (
+                item.left(),
+                item.upper(),
+                item.right(),
+                item.lower(),
+            )
+
+            img.paste(item.pil, box)
+
+        img.save(self.spritefile, self.cfg.get('sprite', 'format'))
+
+    def _make_css(self, items):
+        tpl_string = """%s%s {
+    background: url(%s) -%dpx -%dpx;
+    width: %dpx;
+    height: %dpx;
+}
+"""
+        ret = "%s {\n    display: inline-block;\n}\n" % self.cfg.get('css', 'general_selector')
+
+        for item in items:
+            ret += tpl_string % (
+                self.cfg.get('css', 'prefix'),
+                splitext(basename(item.name))[0],
+                self.spritefile, # TODO handle this path relatively to... I don't know what
+                item.left(),
+                item.upper(),
+                item.width(),
+                item.height(),
+            )
+
+        return ret
+
+    def _expand_file_list(self, file_list):
+        ret = []
+
+        for exp in file_list:
+            ret += glob(join(self.cwd, exp))
+
+        return ret
+
+    def _parse_config(self, filename):
+        if not exists(filename):
+            return None, "Missing file: %s" % filename
+
+        cfg = ConfigParser.ConfigParser(allow_no_value=True)
+        cfg.read([self._default_conf, filename])
+
+        return cfg, None
 
 if __name__ == "__main__":
-    cfg, err = parse_config("config.ptl")
-    print err
-    print cfg
+    ptl = Ponytile("config.ptl")
+    cfg, err = ptl.load_cfg()
+    ptl.compile()

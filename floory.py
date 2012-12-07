@@ -15,8 +15,8 @@ class Item(object):
 
     def __init__(self, name, w, h):
         self.name = name
-        self.w = w
-        self.h = h
+        self.w = int(w)
+        self.h = int(h)
         self.x = None
         self.y = None
 
