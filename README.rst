@@ -72,6 +72,12 @@ Just include the generated CSS somewhere, and then do::
 
 It should make the trick :)
 
+Using the library
+-----------------
+
+Open `bin/ponytile` and look at how things are done. There is not much more to
+say about the public API right now!
+
 Copyright
 =========
 
