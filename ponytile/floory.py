@@ -8,6 +8,7 @@
 # Copyright (c) 2012 Rémy Sanchez <remy.sanchez@hyperthese.net>
 # Under the terms of the WTFPL
 
+
 class Item(object):
     """
     Represents an item, with its size and position.
@@ -25,6 +26,7 @@ class Item(object):
 
     def __repr__(self):
         return self.name
+
 
 class Grid(object):
     """
@@ -95,6 +97,7 @@ class Grid(object):
         self.w = max_x
         self.h = max_y
 
+
 def plan(items, width=10):
     """
     Will calculate an optimized planning for the items and set the appropriate coordinates in the objects.
@@ -127,6 +130,7 @@ def plan(items, width=10):
 
     return grid
 
+
 def _disp_grid(grid):
     import sys
 
@@ -134,6 +138,7 @@ def _disp_grid(grid):
         for x in range(0, grid.w):
             sys.stdout.write("%5s" % grid.grid[x][y])
         sys.stdout.write("\n")
+
 
 if __name__ == '__main__':
     items = [

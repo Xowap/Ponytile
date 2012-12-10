@@ -19,6 +19,7 @@ from math import ceil
 # TODO modified file date
 # TODO Python 3.x compat -> what about PIL ?
 
+
 class Ponyitem(floory.Item):
     def __init__(self, filename, block_w, block_h):
         self.filename = filename
