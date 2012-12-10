@@ -12,11 +12,12 @@ from __future__ import division
 import ConfigParser
 import Image
 import floory
-from os.path import dirname, abspath, normpath, join, exists, basename, splitext
+from os.path import dirname, abspath, normpath, relpath, join, exists, basename, splitext
 from glob import glob
 from math import ceil
 
 # TODO modified file date
+# TODO Python 3.x compat -> what about PIL ?
 
 class Ponyitem(floory.Item):
     def __init__(self, filename, block_w, block_h):
@@ -51,7 +52,7 @@ class Ponyitem(floory.Item):
 
 
 class Ponytile(object):
-    _default_conf = join(dirname(__file__), "/default_config.ptl")
+    _default_conf = join(dirname(__file__), "default_config.ptl")
 
     def __init__(self, filename):
         self.cfg = None
@@ -61,13 +62,23 @@ class Ponytile(object):
     def load_cfg(self):
         self.cfg, error = self._parse_config(self.filename)
 
-        if error is not None:
-            return False, error
-        else:
-            return True, None
+        return error
 
-    def compile(self):
-        self.spritefile = self.cfg.get('sprite', 'filename')
+    def compile(self, destfile):
+        """
+        Will compile the source file into the specified destfile, and will also generate the according sprite file as
+        specified in the source file.
+        """
+
+        self.target_cwd = dirname(abspath(destfile))
+        self.spritefile = normpath(join(self.target_cwd, self.cfg.get('sprite', 'filename')))
+
+        try:
+            # TODO overwrite warning
+            outfh = open(destfile, "w")
+        except IOError:
+            return "Unable to open the destination file"
+
         input_img = self._expand_file_list([k for k, v in self.cfg.items('files')])
         block_w = self.cfg.getint('tile', 'width')
         block_h = self.cfg.getint('tile', 'height')
@@ -76,7 +87,12 @@ class Ponytile(object):
         grid = floory.plan(items, self.cfg.getint('sprite', 'width'))
 
         self._make_image(items, grid)
-        print self._make_css(items)
+        out = self._make_css(items)
+
+        outfh.write(out)
+        outfh.close()
+
+        return None
 
     def _make_image(self, items, grid):
         img_w = grid.w * self.cfg.getint('tile', 'width')
@@ -109,7 +125,7 @@ class Ponytile(object):
             ret += tpl_string % (
                 self.cfg.get('css', 'prefix'),
                 splitext(basename(item.name))[0],
-                self.spritefile, # TODO handle this path relatively to... I don't know what
+                relpath(self.spritefile, self.target_cwd),
                 item.left(),
                 item.upper(),
                 item.width(),
@@ -127,6 +143,7 @@ class Ponytile(object):
         return ret
 
     def _parse_config(self, filename):
+        # TODO better config checking
         if not exists(filename):
             return None, "Missing file: %s" % filename
 
