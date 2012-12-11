@@ -10,11 +10,11 @@
 from __future__ import division
 
 import ConfigParser
-import Image
 import floory
 from os.path import dirname, abspath, normpath, relpath, join, exists, basename, splitext
 from glob import glob
 from math import ceil
+from PIL import Image
 
 # TODO modified file date
 # TODO Python 3.x compat -> what about PIL ?
@@ -115,18 +115,20 @@ class Ponytile(object):
 
     def _make_css(self, items):
         tpl_string = """%s%s {
-    background: url(%s) -%dpx -%dpx;
+    background-position: -%dpx -%dpx;
     width: %dpx;
     height: %dpx;
 }
 """
-        ret = "%s {\n    display: inline-block;\n}\n" % self.cfg.get('css', 'general_selector')
+        ret = "%s {\n    display: inline-block;\n    background-image: url(%s);\n}\n" % (
+            self.cfg.get('css', 'general_selector'),
+            relpath(self.spritefile, self.target_cwd),
+        )
 
         for item in items:
             ret += tpl_string % (
                 self.cfg.get('css', 'prefix'),
                 splitext(basename(item.name))[0],
-                relpath(self.spritefile, self.target_cwd),
                 item.left(),
                 item.upper(),
                 item.width(),

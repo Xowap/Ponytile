@@ -1,0 +1,31 @@
+v0.1
+	- Takes raste pictures and generate
+
+v0.1.1
+	- Replacement of PIL by Pillow
+
+v0.2
+	- Unit testing
+	- Complete documentation
+	- Add margins to pictures
+	- Fully-tested CSS (all target browsers)
+	- Source file validation
+	- Latest-modif feature
+
+v0.3
+	- Better floor-planning
+	- Abstract picture manipulation engines
+	- Pillow picture engine
+	- Qt picture engine
+	- Other picture engine ?
+
+v0.4
+	- SVG as output engine
+	- Use SVG as source images
+	- SVG in/out cleaning
+
+v0.5
+	- Responsive CSS generation for DPI variations
+
+v1
+	- Everything tested and hardened
